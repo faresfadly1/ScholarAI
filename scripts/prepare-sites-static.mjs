@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, rmSync } from "node:fs";
+import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -8,6 +8,15 @@ const output = path.join(root, "dist");
 
 rmSync(path.join(root, "dist"), { recursive: true, force: true });
 mkdirSync(output, { recursive: true });
-cpSync(path.join(web, ".next", "server", "app", "dashboard.html"), path.join(output, "index.html"));
+const htmlPath = path.join(output, "index.html");
+cpSync(path.join(web, ".next", "server", "app", "dashboard.html"), htmlPath);
 cpSync(path.join(web, ".next", "static"), path.join(output, "_next", "static"), { recursive: true });
 cpSync(path.join(web, "public"), output, { recursive: true });
+
+if (process.env.GITHUB_ACTIONS) {
+  const basePath = "/ScholarAI";
+  const html = readFileSync(htmlPath, "utf8")
+    .replaceAll('"/_next/', `"${basePath}/_next/`)
+    .replaceAll('"/favicon.svg', `"${basePath}/favicon.svg`);
+  writeFileSync(htmlPath, html);
+}

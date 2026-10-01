@@ -1,7 +1,10 @@
 import path from "node:path";
 import type { NextConfig } from "next";
+const siteBasePath = process.env.GITHUB_ACTIONS ? "/ScholarAI" : "";
 const config: NextConfig = {
   output: "standalone",
+  basePath: siteBasePath || undefined,
+  assetPrefix: siteBasePath || undefined,
   webpack(config) {
     config.resolve.alias = {
       ...config.resolve.alias,
