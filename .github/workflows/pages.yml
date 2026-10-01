@@ -26,6 +26,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Build static dashboard
+        env:
+          GITHUB_PAGES: "true"
         run: npm run build
       - name: Configure Pages
         uses: actions/configure-pages@v5

@@ -27,7 +27,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
-      - run: npm run format:check -w apps/web
+      - run: npm run format:check --prefix apps/web
       - run: npm test
       - run: npm run build
   e2e:
@@ -50,7 +50,7 @@ jobs:
       - run: npm run build
       - run: |
           (cd apps/api && uv run uvicorn app.main:app --host 127.0.0.1 --port 8000) &
-          npm run start -w apps/web &
+          npm run start &
           for attempt in $(seq 1 45); do curl -fsS http://localhost:8000/ready >/dev/null && curl -fsS http://localhost:3000/login >/dev/null && break; sleep 2; done
           npm run test:e2e
       - uses: actions/upload-artifact@v4

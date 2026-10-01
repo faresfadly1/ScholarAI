@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { NextConfig } from "next";
-const siteBasePath = process.env.GITHUB_ACTIONS ? "/ScholarAI" : "";
+const siteBasePath = process.env.GITHUB_PAGES ? "/ScholarAI" : "";
 const config: NextConfig = {
   output: "standalone",
   basePath: siteBasePath || undefined,

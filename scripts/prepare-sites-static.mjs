@@ -9,11 +9,11 @@ const output = path.join(root, "dist");
 rmSync(path.join(root, "dist"), { recursive: true, force: true });
 mkdirSync(output, { recursive: true });
 const htmlPath = path.join(output, "index.html");
-cpSync(path.join(web, ".next", "server", "app", "dashboard.html"), htmlPath);
+cpSync(path.join(web, ".next", "server", "app", "index.html"), htmlPath);
 cpSync(path.join(web, ".next", "static"), path.join(output, "_next", "static"), { recursive: true });
 cpSync(path.join(web, "public"), output, { recursive: true });
 
-if (process.env.GITHUB_ACTIONS) {
+if (process.env.GITHUB_PAGES) {
   const basePath = "/ScholarAI";
   const html = readFileSync(htmlPath, "utf8")
     .replaceAll('"/_next/', `"${basePath}/_next/`)

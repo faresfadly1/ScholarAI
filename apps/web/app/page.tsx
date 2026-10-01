@@ -13,6 +13,10 @@ import {
 import { Logo } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 export default function Home() {
+  const pagesPreview = process.env.GITHUB_PAGES === "true";
+  const sourceUrl = "https://github.com/faresfadly1/ScholarAI";
+  const signInHref = pagesPreview ? sourceUrl : "/login";
+  const startHref = pagesPreview ? "#features" : "/register";
   return (
     <div className="landing">
       <nav className="landing-nav">
@@ -24,9 +28,9 @@ export default function Home() {
           <a href="#features">Built for your next step</a>
         </div>
         <div>
-          <Link href="/login">Sign in</Link>
+          <Link href={signInHref}>{pagesPreview ? "View source" : "Sign in"}</Link>
           <Button asChild>
-            <Link href="/register">Get started</Link>
+            <Link href={startHref}>{pagesPreview ? "Explore features" : "Get started"}</Link>
           </Button>
         </div>
       </nav>
@@ -45,12 +49,22 @@ export default function Home() {
             </p>
             <div className="actions">
               <Button asChild>
-                <Link href="/register">Analyze my application</Link>
+                <Link href={startHref}>
+                  {pagesPreview ? "View the project" : "Analyze my application"}
+                </Link>
               </Button>
               <Button variant="outline" asChild>
-                <Link href="/login?demo=1">View demo</Link>
+                <Link href={pagesPreview ? "#features" : "/login?demo=1"}>
+                  {pagesPreview ? "How it works" : "View demo"}
+                </Link>
               </Button>
             </div>
+            {pagesPreview && (
+              <p className="hero-note">
+                This public preview is a product showcase. Sign-in and live analysis need the
+                application API.
+              </p>
+            )}
             <span className="hero-note">
               <ShieldCheck size={16} /> Private documents. Transparent decisions. No false promises.
             </span>
@@ -152,7 +166,9 @@ export default function Home() {
               changing your real evidence.
             </p>
             <Button asChild>
-              <Link href="/register">Build my application plan</Link>
+              <Link href={startHref}>
+                {pagesPreview ? "Explore the project" : "Build my application plan"}
+              </Link>
             </Button>
           </div>
           <div className="feature-grid">
