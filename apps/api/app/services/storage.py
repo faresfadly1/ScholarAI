@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import boto3
+from botocore.config import Config
 
 from app.core.config import settings
 
@@ -13,6 +14,8 @@ class Storage:
                 endpoint_url=settings.s3_endpoint,
                 aws_access_key_id=settings.s3_access_key,
                 aws_secret_access_key=settings.s3_secret_key,
+                region_name="us-east-1",
+                config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
             )
             if settings.storage_backend == "s3"
             else None
@@ -38,6 +41,21 @@ class Storage:
         if self.client:
             return self.client.get_object(Bucket=settings.s3_bucket, Key=key)["Body"].read()
         return self.path(key).read_bytes()
+
+    def signed_url(self, key, mime, filename, expires_in=90):
+        if not self.client:
+            return None
+        safe_filename = filename.replace('"', "").replace("\\", "_").replace("\r", "").replace("\n", "")[:200]
+        return self.client.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": settings.s3_bucket,
+                "Key": key,
+                "ResponseContentType": mime,
+                "ResponseContentDisposition": f'attachment; filename="{safe_filename}"',
+            },
+            ExpiresIn=expires_in,
+        )
 
     def delete(self, key):
         if self.client:

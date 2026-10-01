@@ -1,60 +1,28 @@
-previewsEnabled: false
 services:
   - type: web
-    name: scholarai-web
-    runtime: docker
-    plan: 0.5c-512mb
-    region: frankfurt
-    dockerfilePath: ./infra/docker/web.Dockerfile
-    dockerContext: .
-    healthCheckPath: /health
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: API_INTERNAL_URL
-        fromService:
-          type: pserv
-          name: scholarai-api
-          property: hostport
-      - key: INTERNAL_PROXY_SECRET
-        fromService:
-          type: pserv
-          name: scholarai-api
-          envVarKey: INTERNAL_PROXY_SECRET
-      - key: TRUSTED_CLIENT_IP_HEADER
-        value: CF-Connecting-IP
-
-  - type: pserv
     name: scholarai-api
     runtime: docker
-    plan: 0.5c-512mb
+    plan: free
     region: frankfurt
     dockerfilePath: ./infra/docker/api.Dockerfile
     dockerContext: .
-    preDeployCommand: alembic upgrade head
+    dockerCommand: /app/start-free.sh
+    healthCheckPath: /ready
     envVars:
-      - key: PORT
-        value: "8000"
       - key: ENVIRONMENT
         value: production
+      - key: FREE_DEPLOYMENT_MODE
+        value: "true"
+      - key: APP_URL
+        sync: false
       - key: INTERNAL_PROXY_SECRET
         generateValue: true
-      - key: APP_URL
-        fromService:
-          type: web
-          name: scholarai-web
-          envVarKey: RENDER_EXTERNAL_URL
       - key: DATABASE_URL
-        fromDatabase:
-          name: scholarai-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: scholarai-redis
-          property: connectionString
+        sync: false
       - key: TASK_MODE
-        value: celery
+        value: local
+      - key: REDIS_URL
+        value: ""
       - key: STORAGE_BACKEND
         value: s3
       - key: S3_ENDPOINT
@@ -64,118 +32,12 @@ services:
       - key: S3_SECRET_KEY
         sync: false
       - key: S3_BUCKET
-        sync: false
-      - key: LLM_PROVIDER
-        value: openai-compatible
-      - key: LLM_BASE_URL
-        value: https://api.openai.com/v1
-      - key: LLM_API_KEY
-        sync: false
-      - key: LLM_CHAT_MODEL
-        sync: false
-      - key: LLM_EMBEDDING_MODEL
-        sync: false
+        value: scholarai-private
       - key: EMBEDDING_DIMENSIONS
         value: "1536"
-      - key: SMTP_HOST
-        sync: false
-      - key: SMTP_PORT
-        value: "587"
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASSWORD
-        sync: false
-      - key: SMTP_FROM
-        sync: false
-
-  - type: worker
-    name: scholarai-worker
-    runtime: docker
-    plan: 1c-2g
-    region: frankfurt
-    dockerfilePath: ./infra/docker/api.Dockerfile
-    dockerContext: .
-    dockerCommand: celery -A app.tasks.queue.celery_app worker --loglevel=INFO --concurrency=1
-    envVars:
-      - key: ENVIRONMENT
-        value: production
-      - key: APP_URL
-        fromService:
-          type: web
-          name: scholarai-web
-          envVarKey: RENDER_EXTERNAL_URL
-      - key: DATABASE_URL
-        fromDatabase:
-          name: scholarai-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: scholarai-redis
-          property: connectionString
-      - key: TASK_MODE
-        value: celery
-      - key: STORAGE_BACKEND
-        value: s3
-      - key: S3_ENDPOINT
-        fromService:
-          type: pserv
-          name: scholarai-api
-          envVarKey: S3_ENDPOINT
-      - key: S3_ACCESS_KEY
-        fromService:
-          type: pserv
-          name: scholarai-api
-          envVarKey: S3_ACCESS_KEY
-      - key: S3_SECRET_KEY
-        fromService:
-          type: pserv
-          name: scholarai-api
-          envVarKey: S3_SECRET_KEY
-      - key: S3_BUCKET
-        fromService:
-          type: pserv
-          name: scholarai-api
-          envVarKey: S3_BUCKET
+      - key: MAX_UPLOAD_MB
+        value: "4"
       - key: LLM_PROVIDER
-        value: openai-compatible
-      - key: LLM_BASE_URL
-        fromService:
-          type: pserv
-          name: scholarai-api
-          envVarKey: LLM_BASE_URL
-      - key: LLM_API_KEY
-        fromService:
-          type: pserv
-          name: scholarai-api
-          envVarKey: LLM_API_KEY
-      - key: LLM_CHAT_MODEL
-        fromService:
-          type: pserv
-          name: scholarai-api
-          envVarKey: LLM_CHAT_MODEL
-      - key: LLM_EMBEDDING_MODEL
-        fromService:
-          type: pserv
-          name: scholarai-api
-          envVarKey: LLM_EMBEDDING_MODEL
-      - key: EMBEDDING_DIMENSIONS
-        value: "1536"
-
-  - type: keyvalue
-    name: scholarai-redis
-    plan: 256mb
-    region: frankfurt
-    maxmemoryPolicy: noeviction
-    persistenceMode: journal-snapshot
-    ipAllowList: []
-
-databases:
-  - name: scholarai-db
-    databaseName: scholarai
-    user: scholarai
-    plan: 0.1c-256mb
-    diskSizeGB: 5
-    region: frankfurt
-    postgresMajorVersion: "17"
-    ipAllowList: []
+        value: gemini
+      - key: JWT_SECRET
+        generateValue: true

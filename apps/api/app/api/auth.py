@@ -15,6 +15,7 @@ from app.auth.security import (
     public_user,
     revoke_sessions,
 )
+from app.core.config import settings
 from app.core.limits import limit
 from app.db.session import get_db
 from app.models.entities import AuthToken, Profile, User
@@ -53,6 +54,18 @@ def login(body: Credentials, request: Request, response: Response, db: Session =
     valid = password_matches(user.password_hash if user else DUMMY_HASH, body.password)
     if not user or not valid:
         raise HTTPException(401, "Email or password is incorrect")
+    return new_session(db, user, response)
+
+
+@router.post("/demo")
+def demo_login(request: Request, response: Response, db: Session = Depends(get_db)):
+    """Open the synthetic workspace without exposing or requiring its password."""
+    if not settings.free_deployment_mode:
+        raise HTTPException(404, "Demo login is available on the hosted free application")
+    limit(request, "demo-login", 5)
+    user = db.scalar(select(User).where(User.email == "alex@scholarai.demo"))
+    if not user:
+        raise HTTPException(503, "The synthetic demo is still being prepared. Please retry shortly.")
     return new_session(db, user, response)
 
 

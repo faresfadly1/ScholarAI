@@ -17,6 +17,7 @@ import {
   Settings2,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { uploadDocument } from "@/lib/uploads";
 import { formatDate } from "@/lib/utils";
 import type { Analysis, Document, Scholarship } from "@/types";
 import { Button } from "./ui/button";
@@ -144,12 +145,7 @@ export function NewScholarship() {
     onSuccess: (s) => router.push(`/scholarships/${s.id}`),
   });
   const upload = useMutation({
-    mutationFn: async (file: File) => {
-      const body = new FormData();
-      body.append("file", file);
-      body.append("document_type", "Scholarship guide");
-      return api<Document>("/documents", { method: "POST", body });
-    },
+    mutationFn: (file: File) => uploadDocument(file, "Scholarship guide"),
     onSuccess: () => docs.refetch(),
     onError: (e) => setError(e.message),
   });

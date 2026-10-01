@@ -35,6 +35,23 @@ def send_token(db, user, purpose):
             if settings.smtp_user:
                 client.login(settings.smtp_user, settings.smtp_password)
             client.send_message(message)
+    elif settings.environment == "production" and settings.free_deployment_mode:
+        # E-mail remains optional in the zero-cost demo; login and registrations still work.
+        if settings.resend_api_key:
+            import httpx
+
+            response = httpx.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {settings.resend_api_key}"},
+                json={
+                    "from": settings.smtp_from,
+                    "to": [user.email],
+                    "subject": subject,
+                    "text": f"{subject}\n\n{link}\n\nThis link expires in one hour.",
+                },
+                timeout=10,
+            )
+            response.raise_for_status()
     elif settings.environment != "production":
         directory = Path(".data/mail")
         directory.mkdir(parents=True, exist_ok=True, mode=0o700)

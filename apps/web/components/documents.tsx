@@ -14,6 +14,7 @@ import {
   FileCheck2,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { uploadDocument } from "@/lib/uploads";
 import { formatDate, label } from "@/lib/utils";
 import type { Document, Fact } from "@/types";
 import { Button } from "./ui/button";
@@ -49,12 +50,7 @@ export function DocumentsPage() {
     refetchInterval: 3000,
   });
   const upload = useMutation({
-    mutationFn: async (file: File) => {
-      const body = new FormData();
-      body.append("file", file);
-      body.append("document_type", type);
-      return api<Document>("/documents", { method: "POST", body });
-    },
+    mutationFn: (file: File) => uploadDocument(file, type),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["documents"] });
       setNotice("Document uploaded. We’re extracting your evidence.");
@@ -96,7 +92,10 @@ export function DocumentsPage() {
         </div>
         <div>
           <h2>Bring your evidence together</h2>
-          <p>Drop a document here, or choose a file. PDF, DOCX, PNG, JPG · up to 15 MB</p>
+          <p>
+            Drop a document here, or choose a file. PDF, DOCX, PNG, JPG · up to{" "}
+            {process.env.NEXT_PUBLIC_FREE_DEPLOYMENT_MODE === "true" ? "4" : "15"} MB
+          </p>
           <div className="upload-actions">
             <label className="sr-only" htmlFor="document-type">
               Document type

@@ -83,7 +83,62 @@ class OpenAICompatibleProvider(LLMProvider):
         return [item.embedding for item in response.data]
 
 
+class GeminiProvider(LLMProvider):
+    """Google AI Studio free tier, opt-in because its free tier may train on prompts."""
+
+    def __init__(self):
+        from google import genai
+
+        self.client = genai.Client(api_key=settings.gemini_api_key)
+
+    def generate_structured_output(self, prompt, schema):
+        from google.genai import types
+
+        response = self.client.models.generate_content(
+            model=settings.llm_chat_model or "gemini-3.5-flash-lite",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM,
+                response_mime_type="application/json",
+                response_schema=schema,
+                temperature=0,
+            ),
+        )
+        if not response.text:
+            raise ValueError("Gemini returned no structured response")
+        return schema.model_validate_json(response.text)
+
+    def chat(self, prompt):
+        from google.genai import types
+
+        response = self.client.models.generate_content(
+            model=settings.llm_chat_model or "gemini-3.5-flash-lite",
+            contents=prompt,
+            config=types.GenerateContentConfig(system_instruction=SYSTEM, temperature=0),
+        )
+        return response.text or "The model returned no answer. Please check the cited sources."
+
+    def embed(self, texts):
+        from google.genai import types
+
+        response = self.client.models.embed_content(
+            model=settings.llm_embedding_model or "gemini-embedding-2",
+            contents=texts,
+            config=types.EmbedContentConfig(output_dimensionality=settings.embedding_dimensions),
+        )
+        if not response.embeddings or len(response.embeddings) != len(texts):
+            raise ValueError("Gemini returned an incomplete embedding batch")
+        vectors = [embedding.values for embedding in response.embeddings]
+        if any(not vector or len(vector) != settings.embedding_dimensions for vector in vectors):
+            raise ValueError("Gemini returned embeddings with the wrong dimension")
+        return vectors
+
+
 def get_provider():
+    if settings.llm_provider == "gemini":
+        if not settings.gemini_api_key:
+            raise ValueError("Set GEMINI_API_KEY to enable the optional Gemini provider")
+        return GeminiProvider()
     if settings.llm_provider == "openai-compatible":
         return OpenAICompatibleProvider()
     if settings.llm_provider == "mock" and settings.environment != "production":

@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from fastapi.responses import Response
+from fastapi.responses import RedirectResponse, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -82,6 +82,15 @@ def detail(document_id: str, user=Depends(current_user), db: Session = Depends(g
 @router.get("/{document_id}/download")
 def download(document_id: str, user=Depends(current_user), db: Session = Depends(get_db)):
     document = owned(db, Document, document_id, user.id)
+    signed_url = storage.signed_url(
+        document.storage_key, document.mime_type, document.filename
+    )
+    if signed_url:
+        return RedirectResponse(
+            signed_url,
+            status_code=307,
+            headers={"Cache-Control": "no-store", "Referrer-Policy": "no-referrer"},
+        )
     return Response(
         storage.get(document.storage_key),
         media_type=document.mime_type,

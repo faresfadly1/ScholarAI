@@ -1,4 +1,5 @@
 import hashlib
+import re
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -72,6 +73,14 @@ def current_user(request: Request, db: DBSession = Depends(get_db)):
     if request.method not in {"GET", "HEAD", "OPTIONS"}:
         if not secrets.compare_digest(request.headers.get("x-csrf-token", ""), session.csrf_token):
             raise HTTPException(403, "Invalid CSRF token. Refresh and try again.")
+        user = db.get(User, session.user_id)
+        demo_action = re.fullmatch(r"/api/analyses/[^/]+/(?:simulate|chat)", request.url.path)
+        if (
+            user.email == "alex@scholarai.demo"
+            and request.url.path != "/api/auth/logout"
+            and not demo_action
+        ):
+            raise HTTPException(403, "The shared synthetic demo is read-only. Create an account to save your own work.")
     request.state.session = session
     return db.get(User, session.user_id)
 

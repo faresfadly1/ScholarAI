@@ -6,10 +6,12 @@ dependencies = [
   "fastapi", "uvicorn[standard]", "pydantic-settings", "email-validator",
   "sqlalchemy", "alembic", "psycopg[binary]", "pgvector", "redis", "celery",
   "argon2-cffi", "python-multipart", "httpx", "beautifulsoup4", "pymupdf",
-  "python-docx", "pillow", "pytesseract", "boto3", "openai"
+  "python-docx", "pillow", "pytesseract", "boto3", "openai", "google-genai"
 ]
 [dependency-groups]
 dev = ["pytest", "pytest-cov", "ruff", "pyyaml"]
+[tool.uv]
+package = false
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]

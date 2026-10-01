@@ -39,7 +39,7 @@ class ProfileInput(StrictModel):
     target_degree: str = "Master's"
     target_fields: list[str] = Field(default_factory=list)
     preferred_countries: list[str] = Field(default_factory=list)
-    ai_enabled: bool = True
+    ai_enabled: bool = False
 
     @model_validator(mode="after")
     def validate_scores(self):

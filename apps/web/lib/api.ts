@@ -21,6 +21,11 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   }
   const response = await fetch(`/api${path}`, { ...options, headers, credentials: "same-origin" });
   const body = await response.json().catch(() => ({ detail: "Server unavailable. Please retry." }));
+  if ([502, 503, 504].includes(response.status))
+    throw new ApiError(
+      response.status,
+      "ScholarAI's free demo server is waking up. This may take a moment. Please retry shortly.",
+    );
   if (!response.ok)
     throw new ApiError(
       response.status,

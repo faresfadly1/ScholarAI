@@ -2,7 +2,7 @@ import path from "node:path";
 import type { NextConfig } from "next";
 const siteBasePath = process.env.GITHUB_PAGES ? "/ScholarAI" : "";
 const config: NextConfig = {
-  output: "standalone",
+  ...(process.env.VERCEL ? {} : { output: "standalone" as const }),
   outputFileTracingRoot: path.resolve(__dirname, "../.."),
   basePath: siteBasePath || undefined,
   assetPrefix: siteBasePath || undefined,

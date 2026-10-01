@@ -3,6 +3,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.auth.security import current_user, hasher, password_matches, revoke_sessions
+from app.core.config import settings
 from app.db.session import get_db
 from app.models.entities import (
     AuditLog,
@@ -23,7 +24,11 @@ router = APIRouter(prefix="/api", tags=["Profile and privacy"])
 @router.get("/profile")
 def get_profile(user=Depends(current_user), db: Session = Depends(get_db)):
     profile = db.scalar(select(Profile).where(Profile.user_id == user.id))
-    return {"data": profile.data, "version": profile.version}
+    return {
+        "data": profile.data,
+        "version": profile.version,
+        "gemini_available": settings.llm_provider == "gemini" and bool(settings.gemini_api_key),
+    }
 
 
 @router.put("/profile")

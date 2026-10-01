@@ -19,16 +19,28 @@ logger = logging.getLogger("scholarai")
 @asynccontextmanager
 async def lifespan(app):
     if settings.environment == "production":
-        if (
-            not settings.app_url.startswith("https://")
-            or not settings.redis_url
-            or settings.task_mode != "celery"
-            or settings.storage_backend != "s3"
-            or not settings.smtp_host
-            or settings.llm_provider == "mock"
-        ):
+        base_requirements = (
+            settings.app_url.startswith("https://")
+            and settings.storage_backend == "s3"
+        )
+        free_requirements = (
+            settings.free_deployment_mode
+            and not settings.redis_url
+            and settings.task_mode == "local"
+            and settings.database_url.startswith("postgresql+")
+            and bool(settings.internal_proxy_secret)
+        )
+        paid_requirements = (
+            not settings.free_deployment_mode
+            and bool(settings.redis_url)
+            and settings.task_mode == "celery"
+            and bool(settings.smtp_host)
+            and settings.llm_provider == "openai-compatible"
+        )
+        if not base_requirements or not (free_requirements or paid_requirements):
             raise RuntimeError(
-                "Production requires HTTPS, Redis/Celery, private S3, SMTP and a real AI provider"
+                "Production requires HTTPS and private storage plus either FREE_DEPLOYMENT_MODE "
+                "with PostgreSQL and local jobs, or the configured paid task architecture"
             )
     yield
 
@@ -83,11 +95,13 @@ async def unhandled(request: Request, exc: Exception):
 
 
 @app.get("/health")
+@app.get("/api/health")
 def health():
     return {"status": "ok", "service": "scholarai", "version": "0.1.0"}
 
 
 @app.get("/ready")
+@app.get("/api/ready")
 def ready():
     try:
         with engine.connect() as connection:

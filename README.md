@@ -13,12 +13,10 @@ An evidence-based scholarship application workspace. Upload academic documents, 
 - Deterministic numeric/date/degree/field/document/boolean/AND/OR evaluation. Low confidence, conflicting facts and ambiguous language remain uncertain.
 - Six configurable fit categories, explicit scoring coverage and formula, evidence drawers, strengths, gaps and prioritized roadmap tasks.
 - Immutable analysis versions, What-If scenarios, comparison of up to four analyses, source-cited assistant, JSON exports and printable reports.
-- Private, tenant-filtered pgvector retrieval; configurable OpenAI-compatible provider; explicit local deterministic mode.
+- Private, tenant-filtered pgvector retrieval; optional Gemini provider; deterministic local mode by default.
 - Account export/deletion, external-AI opt-out, source/quality warnings, request IDs, health/readiness endpoints, tests and CI.
 
-The code includes production deployment controls, but **do not represent this build as independently audited or production-validated**. The deployment-specific validation still required is listed below.
-
-For a public application with persistent accounts and uploads, follow the [Render deployment guide](docs/deployment/render.md). It provisions the full server stack and explains how to route the existing GitHub Pages address to the verified application.
+The free live architecture deploys the complete Next.js app to Vercel, FastAPI to Render, and durable data and private files to Supabase. See [Zero-Cost Live Deployment](docs/deployment/render.md) for setup and its limitations. A deployment is not considered live until the public checks in that guide pass.
 
 ## Repository
 
@@ -67,13 +65,12 @@ flowchart TD
     Browser[Browser: Next.js / React] --> Web[Next.js same-origin API proxy]
     Web --> API[FastAPI: sessions, CSRF, ownership]
     API --> DB[(PostgreSQL + pgvector)]
-    API --> Storage[(Private S3 / MinIO originals)]
-    API --> Queue[Redis / Celery]
-    Queue --> Worker[Isolated document / analysis worker]
-    Worker --> Parser[PyMuPDF / python-docx / OCR]
+    API --> Storage[(Private Supabase Storage)]
+    API --> Jobs[Local FastAPI job threads in free deployment]
+    Jobs --> Parser[PyMuPDF / python-docx / OCR]
     Parser --> Facts[Source-linked document facts]
     Facts --> Rules[Deterministic eligibility engine]
-    Worker --> AI[Configurable structured LLM + embeddings]
+    Jobs --> AI[Optional opt-in Gemini; local mode by default]
     Rules --> Snapshot[Immutable analysis snapshot]
     AI --> Snapshot
     Snapshot --> DB
@@ -158,7 +155,7 @@ npm run dev
 
 Open [localhost:3000](http://localhost:3000), using this exact origin to match CSRF origin validation. `scripts/dev.sh` also installs Python dependencies, migrates, and starts both servers after `npm ci`. An `.env` in the root is for Compose; standalone FastAPI reads `apps/api/.env` or exported environment variables. Do not copy Compose hostnames such as `postgres` into a standalone local environment.
 
-Local data lives under `apps/api/.data/`. Development verification/reset emails are written to private JSON files in `.data/mail/`; open the `url` field to complete the flow. Tokens expire in one hour. Real delivery requires SMTP.
+Local data lives under `apps/api/.data/`. Development verification/reset emails are written to private JSON files in `.data/mail/`; open the `url` field to complete the flow. Tokens expire in one hour. Hosted delivery is optional and uses Resend when configured.
 
 ## Configuration
 
@@ -173,29 +170,36 @@ See `.env.example` for the complete Compose configuration. For a standalone loca
 | `TASK_MODE` | `celery`, `local`, or `eager` (tests only) |
 | `STORAGE_BACKEND`, `STORAGE_PATH` | `s3` or private local development files |
 | `S3_ENDPOINT`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET` | Private object storage |
-| `LLM_PROVIDER` | `mock` for local deterministic mode; `openai-compatible` for external AI |
-| `LLM_API_KEY`, `LLM_BASE_URL` | Server-only compatible provider credentials/endpoint |
-| `LLM_CHAT_MODEL`, `LLM_EMBEDDING_MODEL` | Explicit model names; no silently chosen paid model |
+| `LLM_PROVIDER` | `mock` for local deterministic mode; `gemini` for optional Gemini |
+| `GEMINI_API_KEY` | Optional server-only Gemini API credential |
+| `LLM_CHAT_MODEL`, `LLM_EMBEDDING_MODEL` | Gemini model names: `gemini-3.5-flash-lite` and `gemini-embedding-2` by default |
 | `EMBEDDING_DIMENSIONS` | 1536 for the initial pgvector schema; changing requires a migration and reindex |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Production email delivery, STARTTLS |
-| `DEMO_PASSWORD` | Synthetic seed password; at least 12 characters |
+| `RESEND_API_KEY`, `SMTP_FROM` | Optional Resend email delivery and verified sender |
+| `DEMO_PASSWORD` | Local synthetic seed password; hosted demo login does not expose a password |
 | `JWT_SECRET` | Reserved compatibility variable; sessions use random opaque DB-backed tokens, not JWTs |
 | `API_INTERNAL_URL` | Next.js API destination, defaults to local port 8000; Docker build uses `api:8000` |
 
-Production startup requires HTTPS, S3, Redis/Celery, SMTP, and an external AI provider. The mock provider is intentionally disallowed in production. User opt-out uses local deterministic extraction and never sends new content to the external provider.
+Production free mode requires HTTPS, PostgreSQL, private S3-compatible storage, and the same-origin proxy secret. It deliberately runs task jobs in the API process without Redis or Celery. Gemini and Resend are optional; deterministic extraction, rule evaluation and local embeddings work without them. Users must opt in before document excerpts or profile details are sent to Gemini.
+
+## Zero-Cost Live Deployment
+
+The target infrastructure cost is **$0.00/month** using provider free tiers: Vercel Hobby for the complete Next.js app, Render Free for one FastAPI web service, Supabase Free for PostgreSQL with `vector` and private document storage, Gemini API free tier for optional AI, and Resend Free for optional email. GitHub Pages remains a static marketing site with **Launch ScholarAI** and **Try Demo** links into the Vercel app. The Render Blueprint creates only a free web service; there is no Render database, worker, Redis, paid storage, or required AI key.
+
+The live free tiers have limits. Render sleeps after inactivity and has temporary local disk, so lasting records and original files live in Supabase; its cold start may take about a minute. Supabase free projects have storage/database caps and can pause after inactivity. Vercel Hobby has request/build quotas and is intended for personal, non-commercial use. Gemini free-tier privacy terms differ from paid tiers, so ScholarAI disables external AI by default. When free quotas are reached, services can pause or reject work until their limits reset. Keep billing and paid upgrades disabled. See the [deployment guide](docs/deployment/render.md) for setup, CORS, secrets and verification.
+
+`FREE_DEPLOYMENT_MODE=true` is the supported zero-cost live configuration. It uses short jobs on the API service and database-backed status polling. Redis/Celery remain available for local Docker and future non-free deployments, but are not provisioned or required here.
 
 ## AI provider setup
 
 ```dotenv
-LLM_PROVIDER=openai-compatible
-LLM_API_KEY=<server-only-key>
-LLM_BASE_URL=https://your-compatible-provider.example/v1
-LLM_CHAT_MODEL=<structured-output-capable-model>
-LLM_EMBEDDING_MODEL=<embedding-model>
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=<server-only-key>
+LLM_CHAT_MODEL=gemini-3.5-flash-lite
+LLM_EMBEDDING_MODEL=gemini-embedding-2
 EMBEDDING_DIMENSIONS=1536
 ```
 
-The provider interface exposes structured generation, chat, and embeddings. Schema validation retries malformed output safely. Source excerpts are validated, and exact numeric facts remain parsed by deterministic patterns. Mandatory rules never depend only on a semantic judgment. External AI receives only the pages/excerpts relevant to extraction or the requested analysis. Each user can disable future external processing in Settings.
+The provider interface exposes structured generation, chat, and embeddings. Schema validation retries malformed output safely. Source excerpts are validated, and exact numeric facts remain parsed by deterministic patterns. Mandatory rules never depend only on a semantic judgment. External AI receives only relevant excerpts and is unavailable until explicitly enabled by both deployment configuration and the account holder. On the Gemini free tier, Google may use submitted content to improve its products; see the privacy warning in Settings before opting in.
 
 Changing provider/model requires reprocessing documents and creating new analyses; never mix vector models without reindexing. Local mode is explicitly labeled: lexical vectors are development fixtures, not trained semantic embeddings. The local assistant explains stored evaluations with sources and does not pretend to be generative AI.
 
@@ -247,7 +251,7 @@ docker compose run --rm migrate
 docker compose up -d api worker web
 ```
 
-The web image uses Next.js standalone output; the API/worker images use locked Python dependencies and include OCR. Use a production secret manager rather than committed env files. Enable database/object backups, encryption and retention policies. Set worker resource limits, configure a trusted client-IP strategy at your reverse proxy, and add error monitoring. Health is `/health`; readiness checks database, Redis and S3 at `/ready`.
+The web image uses Next.js standalone output; the API/worker images use locked Python dependencies and include OCR. Use a production secret manager rather than committed env files. Configure a trusted client-IP strategy at your reverse proxy. Health is `/health`; readiness checks database, optional Redis, and S3 at `/ready`. For the free live service, follow the deployment guide rather than this Docker Compose architecture.
 
 ## Evidence, security and API documentation
 
@@ -268,9 +272,9 @@ Browser-verified screenshots show only the synthetic demo workspace.
 
 ## Known limitations
 
-- The pinned MinIO containers are for local development. The upstream [server](https://github.com/minio/minio) and [client](https://github.com/minio/mc) maintenance status should be reviewed before deployment; use a supported S3 service for production.
+- MinIO is for local development. The free live deployment uses Supabase's private S3-compatible Storage API.
 - Docker is not installed on the implementation host. Compose service startup, PostgreSQL/pgvector runtime behavior, Redis/Celery delivery and MinIO integration need execution in a Docker-capable environment; local validation uses SQLite/files/thread jobs.
-- No real provider credentials or SMTP server were supplied. External generation/embedding compatibility and actual email delivery need integration validation with the selected services.
+- Free external services and API credentials still need to be configured in their dashboards before a public deployment can be validated. Gemini and email are optional; the rule engine works without either.
 - OCR needs the Tesseract binary (bundled in Docker). Poor scans, unusual transcripts, multilingual layouts, complex GPA scales, conditional eligibility, and ambiguous sources can require manual review. DOCX page 1 means a text section, not a rendered pagination claim.
 - Automatic URL metadata extraction is deliberately conservative. It reads explicit labels; missing deadlines/funding are shown as unspecified. Requirements are never invented to fill gaps.
 - Document-quality checks flag explicit expiry dates, pagination discrepancies, and obvious category mismatches; they are not certificate-authenticity verification or malware scanning.

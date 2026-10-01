@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     smtp_from: str = "noreply@scholarai.example"
     demo_password: str = ""
     internal_proxy_secret: str = ""
+    free_deployment_mode: bool = False
+    gemini_api_key: str = ""
+    resend_api_key: str = ""
 
     @field_validator("database_url", mode="before")
     @classmethod

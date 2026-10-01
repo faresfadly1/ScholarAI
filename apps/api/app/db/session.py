@@ -12,11 +12,12 @@ class Base(DeclarativeBase):
 
 if settings.database_url.startswith("sqlite"):
     Path(".data").mkdir(exist_ok=True)
-engine = create_engine(
-    settings.database_url,
-    pool_pre_ping=True,
-    connect_args={"check_same_thread": False} if settings.database_url.startswith("sqlite") else {},
-)
+engine_options = {"pool_pre_ping": True}
+if settings.database_url.startswith("sqlite"):
+    engine_options["connect_args"] = {"check_same_thread": False}
+else:
+    engine_options.update(pool_size=3, max_overflow=2, pool_recycle=300)
+engine = create_engine(settings.database_url, **engine_options)
 if settings.database_url.startswith("sqlite"):
 
     @event.listens_for(engine, "connect")

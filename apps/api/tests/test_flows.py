@@ -1,6 +1,10 @@
 import fitz
 import pytest
 
+from app.auth.security import hasher
+from app.core.config import settings
+from app.db.session import SessionLocal
+from app.models.entities import User
 from app.parsers.documents import detect_mime
 from app.parsers.requirements import extract_requirements
 from app.services.url_fetcher import validate_url
@@ -92,6 +96,30 @@ def test_end_to_end(signed_in):
     assert c.delete(f"/api/documents/{docs[0]['id']}").status_code == 200
     assert c.delete("/api/account").status_code == 200
     assert c.get("/api/profile").status_code == 401
+
+
+def test_synthetic_demo_login_is_available_only_in_free_deployment(client, monkeypatch):
+    with SessionLocal() as db:
+        db.add(
+            User(
+                name="Alex Morgan",
+                email="alex@scholarai.demo",
+                password_hash=hasher.hash("unshared-random-password"),
+                email_verified=True,
+            )
+        )
+        db.commit()
+    response = client.post("/api/auth/demo")
+    assert response.status_code == 404
+
+    monkeypatch.setattr(settings, "free_deployment_mode", True)
+    response = client.post("/api/auth/demo")
+    assert response.status_code == 200
+    assert response.json()["user"]["email"] == "alex@scholarai.demo"
+    client.headers["x-csrf-token"] = response.json()["csrf_token"]
+    blocked = client.put("/api/settings", json={"name": "Changed demo"})
+    assert blocked.status_code == 403
+    assert client.get("/api/auth/me").status_code == 200
 
 
 def test_tenant_and_csrf(signed_in):

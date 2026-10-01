@@ -245,7 +245,7 @@ def process_scholarship(db, item):
 def process_analysis(db, item):
     if (
         settings.llm_provider != "mock"
-        and item.snapshot["profile"].get("ai_enabled", True)
+        and item.snapshot["profile"].get("ai_enabled", False)
         and external_ai_allowed(db, item.user_id)
     ):
         from app.services.alignment import semantic_assessments

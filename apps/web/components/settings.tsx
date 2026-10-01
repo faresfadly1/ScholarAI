@@ -14,7 +14,7 @@ export function SettingsPage() {
     [deleting, setDeleting] = useState(false);
   const profile = useQuery({
     queryKey: ["profile"],
-    queryFn: () => api<{ data: Profile }>("/profile"),
+    queryFn: () => api<{ data: Profile; gemini_available: boolean }>("/profile"),
   });
   const preference = useMutation({
     mutationFn: (enabled: boolean) =>
@@ -140,22 +140,26 @@ export function SettingsPage() {
           <label className="inline-label">
             <input
               type="checkbox"
-              checked={profile.data?.data.ai_enabled !== false}
-              disabled={preference.isPending}
+              checked={profile.data?.data.ai_enabled === true}
+              disabled={preference.isPending || profile.data?.gemini_available !== true}
               onChange={(e) => preference.mutate(e.target.checked)}
             />{" "}
             Allow external AI processing
           </label>
           {preference.error && <p className="error-message">{preference.error.message}</p>}
           <p>
-            Disabling external AI keeps future processing local and deterministic. Already shared
-            data follows your provider’s retention policy.
+            External AI is off by default. Enabling it sends relevant document excerpts and profile
+            details to Google Gemini. Gemini’s free tier may use submitted content to improve its
+            services; turn this on only if you accept that. Already shared data follows Google’s
+            retention policy.
           </p>
           <p>
-            AI processing uses only the information needed for extraction and application analysis.
-            Local mode uses deterministic extraction; a configured external provider receives source
-            excerpts.
+            With external AI off, ScholarAI uses deterministic extraction and rule-based analysis.
+            Enabling Gemini is optional and never required to use the application.
           </p>
+          {profile.data?.gemini_available !== true && (
+            <p>Gemini is not configured on this deployment, so external AI cannot be enabled.</p>
+          )}
         </section>
         <section className="panel padded danger-zone">
           <h2>

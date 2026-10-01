@@ -14,9 +14,9 @@ import { Logo } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 export default function Home() {
   const pagesPreview = process.env.GITHUB_PAGES === "true";
-  const sourceUrl = "https://github.com/faresfadly1/ScholarAI";
-  const signInHref = pagesPreview ? sourceUrl : "/login";
-  const startHref = pagesPreview ? "#features" : "/register";
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://scholarai.vercel.app").replace(/\/$/, "");
+  const signInHref = pagesPreview ? `${appUrl}/login` : "/login";
+  const startHref = pagesPreview ? `${appUrl}/register` : "/register";
   return (
     <div className="landing">
       <nav className="landing-nav">
@@ -28,9 +28,9 @@ export default function Home() {
           <a href="#features">Built for your next step</a>
         </div>
         <div>
-          <Link href={signInHref}>{pagesPreview ? "View source" : "Sign in"}</Link>
+          <Link href={signInHref}>{pagesPreview ? "Launch ScholarAI" : "Sign in"}</Link>
           <Button asChild>
-            <Link href={startHref}>{pagesPreview ? "Explore features" : "Get started"}</Link>
+            <Link href={startHref}>{pagesPreview ? "Launch ScholarAI" : "Get started"}</Link>
           </Button>
         </div>
       </nav>
@@ -49,20 +49,17 @@ export default function Home() {
             </p>
             <div className="actions">
               <Button asChild>
-                <Link href={startHref}>
-                  {pagesPreview ? "View the project" : "Analyze my application"}
-                </Link>
+                <Link href={startHref}>{pagesPreview ? "Launch ScholarAI" : "Analyze my application"}</Link>
               </Button>
               <Button variant="outline" asChild>
-                <Link href={pagesPreview ? "#features" : "/login?demo=1"}>
-                  {pagesPreview ? "How it works" : "View demo"}
+                <Link href={pagesPreview ? `${appUrl}/login?demo=1` : "/login?demo=1"}>
+                  {pagesPreview ? "Try Demo" : "View demo"}
                 </Link>
               </Button>
             </div>
             {pagesPreview && (
               <p className="hero-note">
-                This public preview is a product showcase. Sign-in and live analysis need the
-                application API.
+                Sign in or open the synthetic demo in the live ScholarAI application.
               </p>
             )}
             <span className="hero-note">

@@ -3,12 +3,6 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      app_url:
-        description: Verified HTTPS application origin (optional; uses PUBLIC_APP_URL repository variable)
-        required: false
-        type: string
 
 permissions:
   contents: read
@@ -21,7 +15,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      PUBLIC_APP_URL: ${{ inputs.app_url || vars.PUBLIC_APP_URL }}
+      NEXT_PUBLIC_APP_URL: ${{ vars.PUBLIC_APP_URL || 'https://scholarai.vercel.app' }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -31,16 +25,11 @@ jobs:
           node-version: 24
           cache: npm
       - name: Install dependencies
-        if: env.PUBLIC_APP_URL == ''
         run: npm ci
-      - name: Build project page while production hosting is pending
-        if: env.PUBLIC_APP_URL == ''
+      - name: Build the GitHub Pages marketing site
         env:
           GITHUB_PAGES: "true"
         run: npm run build
-      - name: Publish the entry point to the working application
-        if: env.PUBLIC_APP_URL != ''
-        run: node scripts/build-pages-redirect.mjs
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact

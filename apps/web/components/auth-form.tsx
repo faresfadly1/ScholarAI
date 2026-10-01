@@ -32,6 +32,7 @@ export function AuthForm({
     search = useSearchParams(),
     client = useQueryClient();
   const token = search.get("token") || "";
+  const demoRequested = mode === "login" && search.get("demo") === "1";
   const authMode = mode === "login" || mode === "register";
   const form = useForm<Values>({
     resolver: authMode ? zodResolver(schema) : undefined,
@@ -39,6 +40,8 @@ export function AuthForm({
   });
   const mutation = useMutation({
     mutationFn: async (values: Values) => {
+      if (demoRequested)
+        return api<Auth & { message: string }>("/auth/demo", { method: "POST", body: "{}" });
       const payload =
         mode === "register"
           ? values
@@ -166,6 +169,21 @@ export function AuthForm({
                           ? "Update password"
                           : "Verify email"}
                 </Button>
+                {demoRequested && (
+                  <div className="auth-privacy">
+                    <p>Open a shared, read-only workspace with synthetic sample documents and scholarship results.</p>
+                    <p>Do not upload personal documents or save private information in the demo.</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={mutation.isPending}
+                      onClick={() => mutation.mutate({ email: "", password: "" })}
+                    >
+                      {mutation.isPending ? <LoaderCircle size={17} className="spin" /> : null}
+                      Try the synthetic demo
+                    </Button>
+                  </div>
+                )}
               </fieldset>
             </form>
           )}

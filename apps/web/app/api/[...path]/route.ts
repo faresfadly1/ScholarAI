@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { isIP } from "node:net";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const forwardedRequestHeaders = [
   "accept",
@@ -85,7 +86,7 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
       {
         detail: tooLarge
           ? "Request is too large"
-          : "Application service is temporarily unavailable.",
+          : "ScholarAI's free demo server is waking up. This may take a moment. Please retry shortly.",
       },
       { status: tooLarge ? 413 : 502, headers: { "Cache-Control": "no-store" } },
     );

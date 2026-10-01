@@ -1,7 +1,7 @@
 """Explicit synthetic fixtures only. Run: python -m app.seed_demo_data."""
 
+import secrets
 from datetime import date, timedelta
-from pathlib import Path
 
 import fitz
 from sqlalchemy import select
@@ -60,10 +60,14 @@ def create_sample_pdf(text):
 
 
 def main():
-    if settings.environment == "production":
+    if settings.environment == "production" and not settings.free_deployment_mode:
         raise RuntimeError("Demo seeding is disabled in production")
-    if not settings.demo_password or len(settings.demo_password) < 12:
+    if (
+        not settings.demo_password
+        and not (settings.environment == "production" and settings.free_deployment_mode)
+    ) or (settings.demo_password and len(settings.demo_password) < 12):
         raise ValueError("Set DEMO_PASSWORD to at least 12 characters")
+    demo_password = settings.demo_password or secrets.token_urlsafe(32)
     with SessionLocal() as db:
         if db.scalar(select(User).where(User.email == "alex@scholarai.demo")):
             print("Demo already exists. No existing data changed.")
@@ -71,7 +75,7 @@ def main():
         user = User(
             name="Alex Morgan",
             email="alex@scholarai.demo",
-            password_hash=hasher.hash(settings.demo_password),
+            password_hash=hasher.hash(demo_password),
             email_verified=True,
         )
         db.add(user)
@@ -96,16 +100,13 @@ def main():
                     "experience": ["Software internship at Fictional Labs"],
                     "target_degree": "Master's",
                     "preferred_countries": ["Germany", "Netherlands", "Sweden"],
-                    "ai_enabled": True,
+                    "ai_enabled": False,
                 },
             )
         )
         db.commit()
-        samples = Path(__file__).resolve().parents[1] / "tests" / "fixtures"
-        samples.mkdir(parents=True, exist_ok=True)
         for name, (kind, text) in SAMPLES.items():
             content = create_sample_pdf(text)
-            (samples / name).write_bytes(content)
             key = f"{user.id}/{uid()}"
             storage.put(key, content, "application/pdf")
             doc = Document(
