@@ -1,0 +1,65 @@
+name: ScholarAI CI
+on: [push, pull_request]
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.21'
+          python-version: '3.12'
+      - run: uv sync --frozen
+      - run: uv run ruff check app tests
+      - run: uv run ruff format --check app tests
+      - run: uv run pytest -q
+      - run: uv run alembic upgrade head && uv run alembic check
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check -w apps/web
+      - run: npm test
+      - run: npm run build
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.21'
+          python-version: '3.12'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+      - run: uv sync --frozen && uv run alembic upgrade head && DEMO_PASSWORD='ScholarDemo!2027' uv run python -m app.seed_demo_data
+        working-directory: apps/api
+      - run: npm run build
+      - run: |
+          (cd apps/api && uv run uvicorn app.main:app --host 127.0.0.1 --port 8000) &
+          npm run start -w apps/web &
+          for attempt in $(seq 1 45); do curl -fsS http://localhost:8000/ready >/dev/null && curl -fsS http://localhost:3000/login >/dev/null && break; sleep 2; done
+          npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-test-results
+          path: apps/web/test-results
+  compose-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose config --quiet

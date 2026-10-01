@@ -1,0 +1,21 @@
+[project]
+name = "scholarai-api"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi", "uvicorn[standard]", "pydantic-settings", "email-validator",
+  "sqlalchemy", "alembic", "psycopg[binary]", "pgvector", "redis", "celery",
+  "argon2-cffi", "python-multipart", "httpx", "beautifulsoup4", "pymupdf",
+  "python-docx", "pillow", "pytesseract", "boto3", "openai"
+]
+[dependency-groups]
+dev = ["pytest", "pytest-cov", "ruff", "pyyaml"]
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+[tool.ruff]
+line-length = 100
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+[tool.ruff.lint.per-file-ignores]
+"tests/conftest.py" = ["E402"]
