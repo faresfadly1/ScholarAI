@@ -29,6 +29,7 @@ jobs:
       - run: npm run lint
       - run: npm run format:check --prefix apps/web
       - run: npm test
+      - run: node --test scripts/tests/*.test.mjs
       - run: npm run build
   e2e:
     runs-on: ubuntu-latest
@@ -63,3 +64,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker compose config --quiet
+  docker-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f infra/docker/api.Dockerfile -t scholarai-api .
+      - run: docker build -f infra/docker/web.Dockerfile -t scholarai-web .
+      - name: Verify the production images and runtime API connection
+        run: |
+          docker network create scholarai-test
+          docker run -d --name api --network scholarai-test scholarai-api sh -c 'alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-proxy-headers'
+          docker run -d --name web --network scholarai-test -p 3000:3000 -e API_INTERNAL_URL=api:8000 scholarai-web
+          trap 'docker logs api; docker logs web; docker rm -f api web' EXIT
+          ready=false
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://localhost:3000/health; then ready=true; break; fi
+            sleep 2
+          done
+          test "$ready" = true
+          curl -fsS http://localhost:3000/login >/dev/null
+          curl -fsS http://localhost:3000/api/auth/register -H 'Content-Type: application/json' -H 'Origin: http://localhost:3000' --data '{"email":"container-test@example.com","password":"ContainerTest!2027","name":"Container Test"}' >/dev/null

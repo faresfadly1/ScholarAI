@@ -4,8 +4,8 @@ COPY package.json package-lock.json ./
 COPY apps/web/package.json ./apps/web/package.json
 RUN npm ci
 COPY apps/web ./apps/web
-ENV NEXT_TELEMETRY_DISABLED=1 API_INTERNAL_URL=http://api:8000
-RUN npm run build
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build --prefix apps/web
 FROM node:24-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000

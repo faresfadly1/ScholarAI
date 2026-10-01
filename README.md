@@ -18,6 +18,8 @@ An evidence-based scholarship application workspace. Upload academic documents, 
 
 The code includes production deployment controls, but **do not represent this build as independently audited or production-validated**. The deployment-specific validation still required is listed below.
 
+For a public application with persistent accounts and uploads, follow the [Render deployment guide](docs/deployment/render.md). It provisions the full server stack and explains how to route the existing GitHub Pages address to the verified application.
+
 ## Repository
 
 ```text

@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const siteBasePath = process.env.GITHUB_PAGES ? "/ScholarAI" : "";
 const config: NextConfig = {
   output: "standalone",
+  outputFileTracingRoot: path.resolve(__dirname, "../.."),
   basePath: siteBasePath || undefined,
   assetPrefix: siteBasePath || undefined,
   webpack(config) {
@@ -11,14 +12,6 @@ const config: NextConfig = {
       "@": path.resolve(__dirname),
     };
     return config;
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${process.env.API_INTERNAL_URL || "http://127.0.0.1:8000"}/api/:path*`,
-      },
-    ];
   },
   async headers() {
     return [
