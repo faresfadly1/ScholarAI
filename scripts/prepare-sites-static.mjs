@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const web = path.join(root, "apps", "web");
-const output = path.join(root, "dist", "static");
+const output = path.join(root, "dist");
 
 rmSync(path.join(root, "dist"), { recursive: true, force: true });
 mkdirSync(output, { recursive: true });
