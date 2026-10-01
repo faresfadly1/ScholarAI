@@ -1,1 +1,41 @@
-{"name":"scholarai","private":true,"workspaces":["apps/web"],"scripts":{"dev":"npm run dev -w apps/web","build":"npm run build -w apps/web","lint":"npm run lint -w apps/web","test":"npm run test -w apps/web","test:e2e":"npm run test:e2e -w apps/web"}}
+{
+  "name": "scholarai",
+  "private": true,
+  "scripts": {
+    "dev": "cd apps/web && next dev --webpack --hostname 127.0.0.1",
+    "build": "cd apps/web && next build --webpack",
+    "start": "cd apps/web && next start --hostname 0.0.0.0",
+    "lint": "cd apps/web && eslint . && tsc --noEmit",
+    "test": "cd apps/web && vitest run",
+    "test:e2e": "cd apps/web && playwright test"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "latest",
+    "@radix-ui/react-dialog": "latest",
+    "@radix-ui/react-slot": "latest",
+    "@tanstack/react-query": "latest",
+    "class-variance-authority": "latest",
+    "clsx": "latest",
+    "lucide-react": "latest",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-hook-form": "latest",
+    "recharts": "latest",
+    "tailwind-merge": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest",
+    "@tailwindcss/postcss": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "eslint": "latest",
+    "eslint-config-next": "latest",
+    "prettier": "^3.9.9",
+    "tailwindcss": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}
