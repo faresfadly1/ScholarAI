@@ -169,7 +169,7 @@ See `.env.example` for the complete Compose configuration. For a standalone loca
 | `APP_URL` | Exact trusted web origin, HTTPS in production |
 | `TASK_MODE` | `celery`, `local`, or `eager` (tests only) |
 | `STORAGE_BACKEND`, `STORAGE_PATH` | `s3` or private local development files |
-| `S3_ENDPOINT`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET` | Private object storage |
+| `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET` | Private object storage |
 | `LLM_PROVIDER` | `mock` for local deterministic mode; `gemini` for optional Gemini |
 | `GEMINI_API_KEY` | Optional server-only Gemini API credential |
 | `LLM_CHAT_MODEL`, `LLM_EMBEDDING_MODEL` | Gemini model names: `gemini-3.5-flash-lite` and `gemini-embedding-2` by default |

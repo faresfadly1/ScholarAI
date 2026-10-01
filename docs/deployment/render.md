@@ -28,7 +28,7 @@ Gemini is off by default because Google's Gemini free tier may use submitted con
 1. Create a Supabase project on the Free plan. Leave spend caps and paid upgrades disabled.
 2. In Database → Extensions, enable `vector`. Use the Supabase **session-mode pooler** URL on port `5432` from Connect → ORM; it works with Render's IPv4 network and the API's long-lived SQLAlchemy pool. Append `?sslmode=require` when it is not already present. The API changes `postgresql://` to `postgresql+psycopg://` for SQLAlchemy.
 3. In Storage, enable S3 protocol access. Create a bucket named `scholarai-private` and keep it private. Create S3 credentials with access only to this project’s Storage API.
-4. Record the Postgres URI, project storage S3 endpoint (`https://<project-ref>.storage.supabase.co/storage/v1/s3`), S3 access key and S3 secret key. Never publish them in Git, browser JavaScript, or issue comments.
+4. Record the Postgres URI, project storage S3 endpoint (`https://<project-ref>.storage.supabase.co/storage/v1/s3`), S3 region, access key and secret key. Never publish them in Git, browser JavaScript, or issue comments.
 
 The migration runs `CREATE EXTENSION vector` and creates the schema when the Render service starts. If Supabase denies the extension migration, enable `vector` in its dashboard and redeploy.
 
@@ -38,7 +38,7 @@ Supabase's S3 API uses AWS Signature Version 4 and supports presigned downloads.
 
 1. In Render, create a Blueprint from this public GitHub repository and select the `main` branch. Confirm the service plan shown is **Free** before creating it. Do not add a credit card or paid add-ons.
 2. Set `APP_URL` to the Vercel project’s exact HTTPS origin. Keep the generated `INTERNAL_PROXY_SECRET` private.
-3. Enter the Supabase database URL, S3 endpoint, access key and secret when prompted. The private bucket name is already set to `scholarai-private`.
+3. Enter the Supabase database URL, S3 endpoint, access key and secret when prompted. The Frankfurt S3 region and private bucket name `scholarai-private` are already set.
 4. The service runs Alembic migrations, seeds the fictional demo workspace, and starts one FastAPI process with `TASK_MODE=local` and no Redis. Task records and statuses are stored in PostgreSQL; the UI polls them. These jobs are real parsing and rule analysis work executed by the API process, not fabricated results.
 5. Once the service is created, copy its HTTPS `onrender.com` URL for the Vercel setting in the next step. Wait for `https://<service>.onrender.com/ready` to return `{"status":"ready",...}`.
 

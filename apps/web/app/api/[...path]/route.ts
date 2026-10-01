@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { isIP } from "node:net";
+import { classifyUpstreamFailure } from "../../../lib/upstream-diagnostics";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -33,8 +34,18 @@ async function readBody(request: NextRequest) {
 }
 
 async function proxy(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
-  const apiAddress = process.env.API_INTERNAL_URL || "http://127.0.0.1:8000";
-  const apiOrigin = /^https?:\/\//i.test(apiAddress) ? apiAddress : `http://${apiAddress}`;
+  const apiAddress = process.env.API_INTERNAL_URL;
+  if (!apiAddress && process.env.NODE_ENV === "production") {
+    console.error("[ScholarAI API proxy] API_INTERNAL_URL missing");
+    return Response.json(
+      { detail: "ScholarAI's server is temporarily unavailable. Please retry." },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+  const effectiveAddress = apiAddress || "http://127.0.0.1:8000";
+  const apiOrigin = /^https?:\/\//i.test(effectiveAddress)
+    ? effectiveAddress
+    : `http://${effectiveAddress}`;
   const { path } = await context.params;
   if (path.some((segment) => segment === "." || segment === "..")) {
     return Response.json({ detail: "Invalid API path" }, { status: 400 });
@@ -82,6 +93,13 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     });
   } catch (error) {
     const tooLarge = error instanceof RangeError;
+    if (!tooLarge) {
+      const diagnostic = classifyUpstreamFailure(error);
+      console.error("[ScholarAI API proxy] upstream request failed", {
+        ...diagnostic,
+        path: `/api/${path.join("/")}`,
+      });
+    }
     return Response.json(
       {
         detail: tooLarge

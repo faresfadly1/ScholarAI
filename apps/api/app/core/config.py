@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     storage_backend: str = "local"
     storage_path: str = ".data/objects"
     s3_endpoint: str = "http://minio:9000"
+    s3_region: str = "us-east-1"
     s3_access_key: str = ""
     s3_secret_key: str = ""
     s3_bucket: str = "scholarai"

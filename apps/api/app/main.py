@@ -19,9 +19,11 @@ logger = logging.getLogger("scholarai")
 @asynccontextmanager
 async def lifespan(app):
     if settings.environment == "production":
-        base_requirements = (
-            settings.app_url.startswith("https://") and settings.storage_backend == "s3"
-        )
+        configuration_failures = []
+        if not settings.app_url.startswith("https://"):
+            configuration_failures.append("APP_URL must be an HTTPS origin")
+        if settings.storage_backend != "s3":
+            configuration_failures.append("STORAGE_BACKEND must be s3")
         free_requirements = (
             settings.free_deployment_mode
             and not settings.redis_url
@@ -36,10 +38,29 @@ async def lifespan(app):
             and bool(settings.smtp_host)
             and settings.llm_provider == "openai-compatible"
         )
-        if not base_requirements or not (free_requirements or paid_requirements):
+        if not free_requirements and not paid_requirements:
+            if settings.free_deployment_mode:
+                if settings.redis_url:
+                    configuration_failures.append("REDIS_URL must be empty in free deployment mode")
+                if settings.task_mode != "local":
+                    configuration_failures.append("TASK_MODE must be local in free deployment mode")
+                if not settings.database_url.startswith("postgresql+"):
+                    configuration_failures.append("DATABASE_URL must use PostgreSQL with psycopg")
+                if not settings.internal_proxy_secret:
+                    configuration_failures.append("INTERNAL_PROXY_SECRET is required")
+            else:
+                configuration_failures.append("production task architecture is incomplete")
+        if configuration_failures:
+            logger.error(
+                json.dumps(
+                    {
+                        "event": "configuration_validation_failed",
+                        "checks": configuration_failures,
+                    }
+                )
+            )
             raise RuntimeError(
-                "Production requires HTTPS and private storage plus either FREE_DEPLOYMENT_MODE "
-                "with PostgreSQL and local jobs, or the configured paid task architecture"
+                "Production configuration is invalid; see configuration_validation_failed logs"
             )
     yield
 
@@ -105,18 +126,74 @@ def ready():
     try:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1 FROM users LIMIT 1"))
+    except Exception as exc:
+        logger.error(
+            json.dumps(
+                {
+                    "event": "readiness_check_failed",
+                    "dependency": "postgresql",
+                    "check": "connection_or_schema",
+                    "error_type": type(exc).__name__,
+                }
+            )
+        )
+        return JSONResponse({"status": "not ready"}, status_code=503)
+    if engine.dialect.name == "postgresql":
+        try:
+            with engine.connect() as connection:
+                vector_available = connection.execute(
+                    text("SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector')")
+                ).scalar_one()
+            if not vector_available:
+                raise RuntimeError("pgvector extension missing")
+        except Exception as exc:
+            logger.error(
+                json.dumps(
+                    {
+                        "event": "readiness_check_failed",
+                        "dependency": "pgvector",
+                        "check": "extension",
+                        "error_type": type(exc).__name__,
+                    }
+                )
+            )
+            return JSONResponse({"status": "not ready"}, status_code=503)
+    try:
         if settings.redis_url:
             from app.core.limits import redis_client
 
             redis_client.ping()
+    except Exception as exc:
+        logger.error(
+            json.dumps(
+                {
+                    "event": "readiness_check_failed",
+                    "dependency": "redis",
+                    "check": "ping",
+                    "error_type": type(exc).__name__,
+                }
+            )
+        )
+        return JSONResponse({"status": "not ready"}, status_code=503)
+    try:
         if settings.storage_backend == "s3":
             from app.services.storage import storage
 
             storage.client.head_bucket(Bucket=settings.s3_bucket)
-        return {
-            "status": "ready",
-            "task_mode": settings.task_mode,
-            "ai_provider": settings.llm_provider,
-        }
-    except Exception:
+    except Exception as exc:
+        logger.error(
+            json.dumps(
+                {
+                    "event": "readiness_check_failed",
+                    "dependency": "supabase_storage",
+                    "check": "head_bucket",
+                    "error_type": type(exc).__name__,
+                }
+            )
+        )
         return JSONResponse({"status": "not ready"}, status_code=503)
+    return {
+        "status": "ready",
+        "task_mode": settings.task_mode,
+        "ai_provider": settings.llm_provider,
+    }

@@ -91,14 +91,35 @@ describe("hosted API connection", () => {
   });
 
   it("reports an unavailable backend without exposing internal addresses", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("private internal details")));
+    const cause = Object.assign(new Error("dns details"), { code: "ENOTFOUND" });
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("fetch failed", { cause })));
     const response = await GET(
       new NextRequest("https://app.example.com/api/auth/me"),
       context(["auth", "me"]),
     );
     expect(response.status).toBe(502);
-    expect(await response.text()).not.toContain("private internal details");
+    expect(await response.text()).not.toContain("dns details");
+    expect(log).toHaveBeenCalledWith(
+      "[ScholarAI API proxy] upstream request failed",
+      expect.objectContaining({ category: "dns_failure", code: "ENOTFOUND" }),
+    );
     expect((await health()).status).toBe(503);
+  });
+
+  it("does not fall back to localhost in production when API_INTERNAL_URL is missing", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("API_INTERNAL_URL", "");
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    const response = await GET(
+      new NextRequest("https://app.example.com/api/auth/me"),
+      context(["auth", "me"]),
+    );
+    expect(response.status).toBe(503);
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith("[ScholarAI API proxy] API_INTERNAL_URL missing");
   });
 
   it("marks the web app ready only when its backend is ready", async () => {

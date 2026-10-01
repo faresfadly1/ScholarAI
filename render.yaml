@@ -27,6 +27,8 @@ services:
         value: s3
       - key: S3_ENDPOINT
         sync: false
+      - key: S3_REGION
+        value: eu-central-1
       - key: S3_ACCESS_KEY
         sync: false
       - key: S3_SECRET_KEY

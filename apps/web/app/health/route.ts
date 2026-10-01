@@ -1,7 +1,14 @@
+import { classifyUpstreamFailure } from "../../lib/upstream-diagnostics";
+
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const address = process.env.API_INTERNAL_URL || "http://127.0.0.1:8000";
+  const configuredAddress = process.env.API_INTERNAL_URL;
+  if (!configuredAddress && process.env.NODE_ENV === "production") {
+    console.error("[ScholarAI health] API_INTERNAL_URL missing");
+    return Response.json({ status: "not ready" }, { status: 503 });
+  }
+  const address = configuredAddress || "http://127.0.0.1:8000";
   const origin = /^https?:\/\//i.test(address) ? address : `http://${address}`;
   try {
     const response = await fetch(new URL("/ready", origin), {
@@ -14,8 +21,15 @@ export async function GET() {
         { headers: { "Cache-Control": "no-store" } },
       );
     }
-  } catch {
-    // The hosting health check must fail while the API or its dependencies are down.
+    console.error("[ScholarAI health] API readiness returned non-ready", {
+      category: "upstream_not_ready",
+      status: response.status,
+    });
+  } catch (error) {
+    console.error(
+      "[ScholarAI health] API readiness request failed",
+      classifyUpstreamFailure(error),
+    );
   }
   return Response.json({ status: "not ready" }, { status: 503 });
 }
