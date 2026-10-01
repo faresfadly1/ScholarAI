@@ -26,9 +26,9 @@ Gemini is off by default because Google's Gemini free tier may use submitted con
 ## 1. Create Supabase resources
 
 1. Create a Supabase project on the Free plan. Leave spend caps and paid upgrades disabled.
-2. In Database → Extensions, enable `vector`. Use the project PostgreSQL connection string in transaction-pooler mode if available; append `?sslmode=require` when not already present. The API changes `postgresql://` to `postgresql+psycopg://` for SQLAlchemy.
+2. In Database → Extensions, enable `vector`. Use the Supabase **session-mode pooler** URL on port `5432` from Connect → ORM; it works with Render's IPv4 network and the API's long-lived SQLAlchemy pool. Append `?sslmode=require` when it is not already present. The API changes `postgresql://` to `postgresql+psycopg://` for SQLAlchemy.
 3. In Storage, enable S3 protocol access. Create a bucket named `scholarai-private` and keep it private. Create S3 credentials with access only to this project’s Storage API.
-4. Record the Postgres URI, project storage S3 endpoint (`https://<project-ref>.supabase.co/storage/v1/s3`), S3 access key and S3 secret key. Never publish them in Git, browser JavaScript, or issue comments.
+4. Record the Postgres URI, project storage S3 endpoint (`https://<project-ref>.storage.supabase.co/storage/v1/s3`), S3 access key and S3 secret key. Never publish them in Git, browser JavaScript, or issue comments.
 
 The migration runs `CREATE EXTENSION vector` and creates the schema when the Render service starts. If Supabase denies the extension migration, enable `vector` in its dashboard and redeploy.
 
