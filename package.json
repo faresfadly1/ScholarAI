@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "cd apps/web && next dev --webpack --hostname 127.0.0.1",
-    "build": "cd apps/web && next build --webpack",
+    "build": "cd apps/web && next build --webpack && cd ../.. && node scripts/prepare-sites-static.mjs",
     "start": "cd apps/web && next start --hostname 0.0.0.0",
     "lint": "cd apps/web && eslint . && tsc --noEmit",
     "test": "cd apps/web && vitest run",
