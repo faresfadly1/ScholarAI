@@ -80,7 +80,10 @@ def current_user(request: Request, db: DBSession = Depends(get_db)):
             and request.url.path != "/api/auth/logout"
             and not demo_action
         ):
-            raise HTTPException(403, "The shared synthetic demo is read-only. Create an account to save your own work.")
+            raise HTTPException(
+                403,
+                "The shared synthetic demo is read-only. Create an account to save your own work.",
+            )
     request.state.session = session
     return db.get(User, session.user_id)
 

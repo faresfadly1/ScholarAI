@@ -171,7 +171,10 @@ export function AuthForm({
                 </Button>
                 {demoRequested && (
                   <div className="auth-privacy">
-                    <p>Open a shared, read-only workspace with synthetic sample documents and scholarship results.</p>
+                    <p>
+                      Open a shared, read-only workspace with synthetic sample documents and
+                      scholarship results.
+                    </p>
                     <p>Do not upload personal documents or save private information in the demo.</p>
                     <Button
                       type="button"

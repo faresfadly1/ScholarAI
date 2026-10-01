@@ -45,7 +45,9 @@ class Storage:
     def signed_url(self, key, mime, filename, expires_in=90):
         if not self.client:
             return None
-        safe_filename = filename.replace('"', "").replace("\\", "_").replace("\r", "").replace("\n", "")[:200]
+        safe_filename = (
+            filename.replace('"', "").replace("\\", "_").replace("\r", "").replace("\n", "")[:200]
+        )
         return self.client.generate_presigned_url(
             "get_object",
             Params={

@@ -65,7 +65,9 @@ def demo_login(request: Request, response: Response, db: Session = Depends(get_d
     limit(request, "demo-login", 5)
     user = db.scalar(select(User).where(User.email == "alex@scholarai.demo"))
     if not user:
-        raise HTTPException(503, "The synthetic demo is still being prepared. Please retry shortly.")
+        raise HTTPException(
+            503, "The synthetic demo is still being prepared. Please retry shortly."
+        )
     return new_session(db, user, response)
 
 

@@ -82,9 +82,7 @@ def detail(document_id: str, user=Depends(current_user), db: Session = Depends(g
 @router.get("/{document_id}/download")
 def download(document_id: str, user=Depends(current_user), db: Session = Depends(get_db)):
     document = owned(db, Document, document_id, user.id)
-    signed_url = storage.signed_url(
-        document.storage_key, document.mime_type, document.filename
-    )
+    signed_url = storage.signed_url(document.storage_key, document.mime_type, document.filename)
     if signed_url:
         return RedirectResponse(
             signed_url,

@@ -20,8 +20,7 @@ logger = logging.getLogger("scholarai")
 async def lifespan(app):
     if settings.environment == "production":
         base_requirements = (
-            settings.app_url.startswith("https://")
-            and settings.storage_backend == "s3"
+            settings.app_url.startswith("https://") and settings.storage_backend == "s3"
         )
         free_requirements = (
             settings.free_deployment_mode

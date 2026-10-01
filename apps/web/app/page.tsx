@@ -14,7 +14,10 @@ import { Logo } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 export default function Home() {
   const pagesPreview = process.env.GITHUB_PAGES === "true";
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://scholarai.vercel.app").replace(/\/$/, "");
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://scholarai.vercel.app").replace(
+    /\/$/,
+    "",
+  );
   const signInHref = pagesPreview ? `${appUrl}/login` : "/login";
   const startHref = pagesPreview ? `${appUrl}/register` : "/register";
   return (
@@ -49,7 +52,9 @@ export default function Home() {
             </p>
             <div className="actions">
               <Button asChild>
-                <Link href={startHref}>{pagesPreview ? "Launch ScholarAI" : "Analyze my application"}</Link>
+                <Link href={startHref}>
+                  {pagesPreview ? "Launch ScholarAI" : "Analyze my application"}
+                </Link>
               </Button>
               <Button variant="outline" asChild>
                 <Link href={pagesPreview ? `${appUrl}/login?demo=1` : "/login?demo=1"}>
