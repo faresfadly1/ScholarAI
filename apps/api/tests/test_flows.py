@@ -119,6 +119,8 @@ def test_synthetic_demo_login_is_available_only_in_free_deployment(client, monke
     client.headers["x-csrf-token"] = response.json()["csrf_token"]
     blocked = client.put("/api/settings", json={"name": "Changed demo"})
     assert blocked.status_code == 403
+    # Comparing the seeded analyses is read-only and must remain available in the demo.
+    assert client.post("/api/compare", json=[]).status_code == 422
     assert client.get("/api/auth/me").status_code == 200
 
 

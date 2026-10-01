@@ -74,7 +74,9 @@ def current_user(request: Request, db: DBSession = Depends(get_db)):
         if not secrets.compare_digest(request.headers.get("x-csrf-token", ""), session.csrf_token):
             raise HTTPException(403, "Invalid CSRF token. Refresh and try again.")
         user = db.get(User, session.user_id)
-        demo_action = re.fullmatch(r"/api/analyses/[^/]+/(?:simulate|chat)", request.url.path)
+        demo_action = request.url.path == "/api/compare" or re.fullmatch(
+            r"/api/analyses/[^/]+/(?:simulate|chat)", request.url.path
+        )
         if (
             user.email == "alex@scholarai.demo"
             and request.url.path != "/api/auth/logout"
