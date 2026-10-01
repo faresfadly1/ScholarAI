@@ -54,6 +54,8 @@ jobs:
           npm run start &
           for attempt in $(seq 1 45); do curl -fsS http://localhost:8000/ready >/dev/null && curl -fsS http://localhost:3000/login >/dev/null && break; sleep 2; done
           npm run test:e2e
+        env:
+          API_INTERNAL_URL: http://127.0.0.1:8000
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
