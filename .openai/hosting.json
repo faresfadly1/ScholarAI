@@ -1,5 +1,7 @@
 {
   "project_id": "appgprj_6abe28c6407881919dee389bbdd47859",
   "expected_url": "https://scholarai.maple-pig-9473.chatgpt.site",
-  "static": "dist"
+  "static": {
+    "directory": "dist"
+  }
 }
