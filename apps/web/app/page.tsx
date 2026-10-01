@@ -14,7 +14,7 @@ import { Logo } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 export default function Home() {
   const pagesPreview = process.env.GITHUB_PAGES === "true";
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://scholarai.vercel.app").replace(
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://scholarai-indol.vercel.app").replace(
     /\/$/,
     "",
   );

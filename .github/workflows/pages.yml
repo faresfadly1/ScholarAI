@@ -3,6 +3,7 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,7 +16,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      NEXT_PUBLIC_APP_URL: ${{ vars.PUBLIC_APP_URL || 'https://scholarai.vercel.app' }}
+      NEXT_PUBLIC_APP_URL: ${{ vars.PUBLIC_APP_URL || 'https://scholarai-indol.vercel.app' }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4

@@ -2,14 +2,14 @@
 
 This is the supported free deployment for the complete ScholarAI application. The target recurring infrastructure cost is **$0.00/month** and it uses provider-generated URLs only:
 
-| Service | Free plan | Role |
-| --- | --- | --- |
-| Vercel | Hobby | Complete Next.js application: register, login, onboarding, dashboard, documents, scholarships, analyses, evidence, fit, roadmap, simulations and assistant |
-| Render | Free web service | FastAPI API and short in-process jobs |
-| Supabase | Free | PostgreSQL, `vector` extension and private Storage bucket |
-| Google AI Studio | Gemini API free tier | Optional, user-opt-in structured AI and embeddings |
-| Resend | Free | Optional verification and reset emails |
-| GitHub Pages | Free for public repositories | Marketing page linking into Vercel |
+| Service          | Free plan                    | Role                                                                                                                                                       |
+| ---------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Vercel           | Hobby                        | Complete Next.js application: register, login, onboarding, dashboard, documents, scholarships, analyses, evidence, fit, roadmap, simulations and assistant |
+| Render           | Free web service             | FastAPI API and short in-process jobs                                                                                                                      |
+| Supabase         | Free                         | PostgreSQL, `vector` extension and private Storage bucket                                                                                                  |
+| Google AI Studio | Gemini API free tier         | Optional, user-opt-in structured AI and embeddings                                                                                                         |
+| Resend           | Free                         | Optional verification and reset emails                                                                                                                     |
+| GitHub Pages     | Free for public repositories | Marketing page linking into Vercel                                                                                                                         |
 
 The Render Blueprint in `render.yaml` creates one **Free** Python web service. It does not create a paid service, database, disk, worker, Redis, or billing add-on. Do not upgrade a plan, add a payment method, enable pay-as-you-go billing, or attach paid add-ons. Provider quotas can still temporarily block service. Vercel Hobby is restricted to personal/non-commercial use; this setup is for a personal, educational project, not a commercial service.
 
@@ -70,7 +70,7 @@ Resend can optionally send verification and reset messages. Add `RESEND_API_KEY`
 
 ## 5. Keep GitHub Pages as the marketing page
 
-The `pages.yml` workflow publishes the static marketing page on each push to `main`; it does not redirect Pages to a server. Set the GitHub repository Actions variable `PUBLIC_APP_URL` to the actual Vercel production origin. The Pages CTA opens **Launch ScholarAI** and **Try Demo** in the full application. If the variable is unset, the marketing build uses `https://scholarai.vercel.app` as its fallback.
+The `pages.yml` workflow publishes the static marketing page on each push to `main` or a manual dispatch; it does not redirect Pages to a server. Set the GitHub repository Actions variable `PUBLIC_APP_URL` to the actual Vercel production origin. The Pages CTA opens **Launch ScholarAI** and **Try Demo** in the full application. If the variable is unset, the marketing build uses `https://scholarai-indol.vercel.app` as its fallback.
 
 GitHub Pages cannot run the Next.js server or FastAPI. The complete live app is the Vercel URL, and the free `github.io` address remains the product information and entry page. See [what GitHub Pages hosts](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages).
 
