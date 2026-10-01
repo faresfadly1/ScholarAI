@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: scholarai-api
+    name: scholarai-faresfadly1-api
     runtime: docker
     plan: free
     region: frankfurt

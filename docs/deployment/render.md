@@ -40,7 +40,7 @@ Supabase's S3 API uses AWS Signature Version 4 and supports presigned downloads.
 2. Set `APP_URL` to the Vercel project’s exact HTTPS origin. Keep the generated `INTERNAL_PROXY_SECRET` private.
 3. Enter the Supabase database URL, S3 endpoint, access key and secret when prompted. The Frankfurt S3 region and private bucket name `scholarai-private` are already set.
 4. The service runs Alembic migrations, seeds the fictional demo workspace, and starts one FastAPI process with `TASK_MODE=local` and no Redis. Task records and statuses are stored in PostgreSQL; the UI polls them. These jobs are real parsing and rule analysis work executed by the API process, not fabricated results.
-5. Once the service is created, copy its HTTPS `onrender.com` URL for the Vercel setting in the next step. Wait for `https://<service>.onrender.com/ready` to return `{"status":"ready",...}`.
+5. Once the service is created, copy its HTTPS `onrender.com` URL for the Vercel setting in the next step. The Blueprint names it `scholarai-faresfadly1-api`; the shorter `scholarai-api.onrender.com` already serves an unrelated Express app. Verify the new service's `/health` returns `{"status":"ok","service":"scholarai",...}` and `/ready` returns `{"status":"ready",...}` before updating Vercel.
 
 The demo seed creates a fictional CV, transcript, TOEFL sample marked invalid, a recommendation placeholder, fictional scholarship sources, and completed evidence analyses. No personal information is included. The shared demo account is writable; tell demo users not to upload personal files or store private information. Each registered user gets a separate account.
 
