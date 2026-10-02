@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -34,6 +34,14 @@ export function AuthForm({
   const token = search.get("token") || "";
   const demoRequested = mode === "login" && search.get("demo") === "1";
   const authMode = mode === "login" || mode === "register";
+  useEffect(() => {
+    // Start waking the free backend while the visitor fills in the form.
+    void fetch("/api/ready", {
+      cache: "no-store",
+      credentials: "same-origin",
+      signal: AbortSignal.timeout(45_000),
+    }).catch(() => {});
+  }, []);
   const form = useForm<Values>({
     resolver: authMode ? zodResolver(schema) : undefined,
     defaultValues: { name: "", email: "", password: "" },
@@ -169,6 +177,12 @@ export function AuthForm({
                           ? "Update password"
                           : "Verify email"}
                 </Button>
+                {mutation.isPending && (
+                  <p className="auth-privacy" role="status">
+                    Connecting to ScholarAI. The free server may take a few minutes to start; please
+                    keep this page open. Your request will continue automatically.
+                  </p>
+                )}
                 {demoRequested && (
                   <div className="auth-privacy">
                     <p>
